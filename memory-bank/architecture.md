@@ -340,46 +340,58 @@ App
 
 ```
 src/
-├── components/
-│   ├── Banner/
-│   │   ├── BannerSelector.tsx
-│   │   ├── BannerCard.tsx
-│   │   └── BannerDisplay.tsx
-│   ├── PullButton/
+├── components/           # UI 组件目录
+│   ├── Banner/         # 卡池选择相关组件
+│   │   ├── BannerSelector.tsx   # 卡池选择器
+│   │   ├── BannerCard.tsx       # 卡池卡片
+│   │   └── BannerDisplay.tsx    # 卡池展示
+│   ├── PullButton/     # 抽卡按钮组件
 │   │   └── PullButton.tsx
-│   ├── ResultModal/
-│   │   ├── ResultModal.tsx
-│   │   ├── PullAnimation.tsx
-│   │   └── ResultCard.tsx
-│   ├── PityCounter/
+│   ├── ResultModal/    # 抽卡结果弹窗
+│   │   ├── ResultModal.tsx       # 弹窗主组件
+│   │   ├── PullAnimation.tsx    # 抽卡动画
+│   │   └── ResultCard.tsx       # 结果卡片
+│   ├── PityCounter/    # 保底计数器
 │   │   └── PityCounter.tsx
-│   ├── Stats/
+│   ├── Stats/          # 统计面板
 │   │   └── StatsPanel.tsx
-│   └── History/
+│   └── History/        # 历史记录
 │       ├── HistoryList.tsx
 │       └── HistoryFilters.tsx
-├── hooks/
-│   ├── useWarp.ts
-│   ├── usePity.ts
-│   └── useLocalStorage.ts
-├── store/
-│   └── warpStore.ts
-├── data/
-│   ├── characters.ts
-│   ├── weapons.ts
-│   └── banners.ts
-├── utils/
-│   ├── gacha.ts          # 抽卡算法
-│   ├── storage.ts        # localStorage 封装
-│   ├── probability.ts    # 概率计算
-│   └── uuid.ts           # ID 生成
-├── types/
-│   └── index.ts
-├── styles/
-│   └── globals.css       # Tailwind 入口
-├── App.tsx
-└── main.tsx
+├── hooks/               # 自定义 Hooks
+│   ├── useWarp.ts      # 抽卡逻辑 Hook
+│   ├── usePity.ts      # 保底计算 Hook
+│   └── useLocalStorage.ts # 持久化 Hook
+├── store/               # Zustand 状态管理
+│   └── warpStore.ts    # 抽卡状态 store
+├── data/                # 静态游戏数据
+│   ├── characters.ts   # 角色数据定义
+│   ├── weapons.ts      # 武器/光锥数据定义
+│   └── banners.ts      # 卡池配置
+├── utils/               # 工具函数
+│   ├── gacha.ts         # 抽卡算法核心
+│   ├── storage.ts       # localStorage 封装
+│   ├── probability.ts   # 概率计算工具
+│   └── uuid.ts          # UUID 生成
+├── types/               # TypeScript 类型定义
+│   └── index.ts         # 所有类型导出
+├── styles/              # 样式目录
+│   └── globals.css      # Tailwind 入口/全局样式
+├── App.tsx              # 主应用组件
+└── main.tsx             # 入口文件
 ```
+
+### 目录说明
+
+| 目录 | 作用 | 关键文件 |
+|------|------|----------|
+| `components/` | 所有 UI 组件，按功能模块划分 | BannerSelector, PullButton, ResultModal, PityCounter, StatsPanel, History |
+| `hooks/` | 封装可复用的逻辑 | useWarp (抽卡), usePity (保底), useLocalStorage (持久化) |
+| `store/` | 集中管理应用状态 | warpStore.ts - 包含保底计数、抽卡历史、统计数据 |
+| `data/` | 静态游戏数据 | characters.ts (角色), weapons.ts (武器), banners.ts (卡池) |
+| `utils/` | 工具函数 | gacha.ts (抽卡算法), storage.ts (存储), uuid.ts (ID生成) |
+| `types/` | TypeScript 类型 | index.ts - 定义 Character, Weapon, Banner, PullRecord, PityState 等 |
+| `styles/` | 全局样式 | globals.css - Tailwind 入口和全局主题样式 |
 
 ---
 
@@ -420,7 +432,69 @@ const MAX_HISTORY_SIZE = 1000;
 
 ---
 
-## 9. 验收检查点
+## 9. 工具函数实现详解
+
+### 9.1 UUID 生成 (src/utils/uuid.ts)
+```typescript
+export function generateId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`;
+}
+```
+- 用于生成唯一的抽卡记录 ID
+- 格式: `{时间戳36进制}-{随机字符串}`
+
+### 9.2 保底配置常量 (src/utils/constants.ts)
+定义各卡池的概率和保底配置：
+- `CHARACTER_EVENT`: 5星90保底(180大保底)，4星10保底，5星概率0.6%，UP概率50%
+- `WEAPON_EVENT`: 5星80保底(160大保底)，4星10保底，5星概率0.8%，UP概率75%
+- `STANDARD`: 5星50保底，4星10保底，5星概率0.6%，无UP
+- `NEWCOMER`: 5星50保底(封顶)，4星10保底，5星概率0.6%，无UP
+
+导出 `getBannerConfig(type, category)` 根据卡池类型获取配置
+
+### 9.3 抽卡算法 (src/utils/gacha.ts)
+核心抽卡逻辑：
+1. **3星物品**: 固定的7个3星光锥
+2. **4星物品**: 支持UP/常驻，根据 `isFourStarGuaranteedUP` 判断是否必出UP
+3. **5星物品**: 支持UP/常驻，根据 `isGuaranteedUP` 判断是否必出UP (大保底)
+4. **十连保底**: 每10连保证至少一个4星或5星
+
+主要函数：
+- `pull(banner, pityState, count)`: 执行抽卡，返回结果数组和更新后的保底状态
+- `getThreeStar()`: 获取随机3星
+- `getFourStar(banner, pityState, isGuaranteed)`: 获取4星
+- `getFiveStar(banner, pityState, isGuaranteed)`: 获取5星
+
+### 9.4 localStorage 封装 (src/utils/storage.ts)
+```typescript
+export function saveData<T>(key: string, data: T): void
+export function loadData<T>(key: string): T | null
+export function removeData(key: string): void
+export function clearAllData(): void
+export function isStorageAvailable(): boolean
+```
+- 提供类型安全的 localStorage 操作
+- 自动 JSON 序列化/反序列化
+
+### 9.5 Zustand Store (src/store/warpStore.ts)
+使用 Zustand + persist 中间件管理抽卡状态：
+- **状态**: currentBannerId, pityState, stats, pullHistory, isPulling, showResult, currentResults
+- **Actions**: pull(), switchBanner(), setPulling(), setShowResult(), clearHistory(), reset()
+- **持久化**: 使用 zustand/middleware persist 自动保存到 localStorage
+- **部分持久化**: 仅保存必要字段 (currentBannerId, pityState, stats, pullHistory)
+
+```typescript
+// 使用示例
+import { useWarpStore } from './store/warpStore';
+
+const { pull, currentBannerId, pityState } = useWarpStore();
+pull(1); // 单抽
+pull(10); // 十连
+```
+
+---
+
+## 10. 验收检查点
 
 ### 功能验收
 - [ ] 单抽消耗1抽，十连消耗10抽
