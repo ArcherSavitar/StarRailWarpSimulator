@@ -60,7 +60,7 @@ export function StatsPanel() {
       {/* 当前卡池统计 */}
       <div className="border-t border-gray-700 pt-4">
         <div className="text-sm text-gray-400 mb-2">当前卡池</div>
-        <div className="grid grid-cols-4 gap-2 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
           <div>
             <div className="text-lg font-bold text-white">{pullsInCurrentBanner}</div>
             <div className="text-xs text-gray-500">抽数</div>

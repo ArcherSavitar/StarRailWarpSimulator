@@ -23,12 +23,12 @@ export function PullButtons() {
   return (
     <div className="bg-[#161B22] rounded-lg p-4 mb-6">
       <h2 className="text-lg font-semibold mb-4 text-gray-200">抽卡</h2>
-      <div className="flex gap-4 justify-center">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <button
           onClick={handleSinglePull}
           disabled={isPulling}
           className={`
-            px-8 py-3 rounded-lg font-medium text-lg
+            flex-1 sm:flex-none px-8 py-3 rounded-lg font-medium text-base sm:text-lg
             transition-all duration-200
             ${isPulling
               ? 'bg-gray-600 cursor-not-allowed opacity-50'
@@ -42,7 +42,7 @@ export function PullButtons() {
           onClick={handleTenPull}
           disabled={isPulling}
           className={`
-            px-8 py-3 rounded-lg font-medium text-lg
+            flex-1 sm:flex-none px-8 py-3 rounded-lg font-medium text-base sm:text-lg
             transition-all duration-200
             ${isPulling
               ? 'bg-gray-600 cursor-not-allowed opacity-50'
