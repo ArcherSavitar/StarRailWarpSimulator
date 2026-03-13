@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Banner, PityState, PullRecord, Stats, BannerStats } from '../types';
+import type { Banner, PityState, PullRecord, Stats } from '../types';
 import { banners } from '../data/banners';
 import { pull } from '../utils/gacha';
 import { STORAGE_KEYS } from '../utils/constants';

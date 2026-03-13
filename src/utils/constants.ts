@@ -3,7 +3,7 @@
  * 基于《崩坏：星穹铁道》官方公示的概率和保底机制
  */
 
-import { BannerCategory, BannerType } from '../types';
+import type { BannerCategory, BannerType } from '../types';
 
 /** 卡池配置 */
 export const BANNER_CONFIG = {

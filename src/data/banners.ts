@@ -1,4 +1,4 @@
-import { Banner } from '../types';
+import type { Banner } from '../types';
 
 export const banners: Banner[] = [
   // 角色活动UP池 (飞霄)

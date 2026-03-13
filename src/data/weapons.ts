@@ -1,4 +1,4 @@
-import { Weapon } from '../types';
+import type { Weapon } from '../types';
 
 export const weapons: Weapon[] = [
   // 5星限定武器

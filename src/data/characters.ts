@@ -1,4 +1,4 @@
-import { Character } from '../types';
+import type { Character } from '../types';
 
 export const characters: Character[] = [
   // 5星限定角色

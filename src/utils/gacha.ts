@@ -3,7 +3,8 @@
  * 基于《崩坏：星穹铁道》官方公示的概率和保底机制
  */
 
-import { Banner, BannerType, PityState, PullRecord, Rarity } from '../types';
+import type { Banner, BannerType, PityState, PullRecord, Rarity } from '../types';
+import type { Character, Weapon } from '../types';
 import { getBannerConfig } from './constants';
 import { characters } from '../data/characters';
 import { weapons } from '../data/weapons';
@@ -31,12 +32,15 @@ function getRandomItem<T>(array: T[]): T {
 /**
  * 获取指定星级的所有物品
  */
-function getItemsByRarity(rarity: Rarity, banner: Banner) {
-  const config = getBannerConfig(banner.type, banner.category);
+function getItemsByRarity(rarity: Rarity, banner: Banner): {
+  upItems: (Character | Weapon)[];
+  standardItems: (Character | Weapon)[];
+} {
   const isCharacterBanner = banner.type === 'character';
 
   if (rarity === 3) {
-    return THREE_STAR_ITEMS;
+    // 3星只返回空数组，因为3星是固定的光锥
+    return { upItems: [], standardItems: [] };
   }
 
   if (rarity === 4) {
@@ -46,7 +50,7 @@ function getItemsByRarity(rarity: Rarity, banner: Banner) {
         ? characters.find(c => c.id === id)
         : weapons.find(w => w.id === id)
       )
-      .filter(Boolean);
+      .filter((item): item is Character | Weapon => item !== undefined);
 
     // 获取常驻4星角色/武器
     const standardItems = isCharacterBanner
@@ -63,7 +67,7 @@ function getItemsByRarity(rarity: Rarity, banner: Banner) {
         ? characters.find(c => c.id === id)
         : weapons.find(w => w.id === id)
       )
-      .filter(Boolean);
+      .filter((item): item is Character | Weapon => item !== undefined);
 
     // 获取常驻5星角色/武器
     const standardItems = isCharacterBanner
@@ -129,22 +133,20 @@ function getFourStar(banner: Banner, pityState: PityState, isGuaranteed: boolean
 
   if (!selectedItem) {
     // 兜底：使用UP列表
-    selectedItem = isCharacterBanner
+    const fallbackItem = isCharacterBanner
       ? characters.find(c => c.id === banner.rateUp4Star[0])
       : weapons.find(w => w.id === banner.rateUp4Star[0]);
 
-    if (!selectedItem) {
+    if (fallbackItem) {
+      selectedItem = fallbackItem;
+    } else {
       // 兜底：随机4星
       const allFourStar = isCharacterBanner
         ? characters.filter(c => c.rarity === 4)
         : weapons.filter(w => w.rarity === 4);
-      selectedItem = getRandomItem(allFourStar);
+      selectedItem = getRandomItem(allFourStar as (Character | Weapon)[]);
     }
   }
-
-  const item = isCharacterBanner
-    ? characters.find(c => c.id === selectedItem!.id)
-    : weapons.find(w => w.id === selectedItem!.id);
 
   return {
     id: generateId(),
@@ -196,16 +198,18 @@ function getFiveStar(banner: Banner, pityState: PityState, isGuaranteed: boolean
 
   if (!selectedItem) {
     // 兜底：使用UP列表
-    selectedItem = isCharacterBanner
+    const fallbackItem = isCharacterBanner
       ? characters.find(c => c.id === banner.rateUp5Star[0])
       : weapons.find(w => w.id === banner.rateUp5Star[0]);
 
-    if (!selectedItem) {
+    if (fallbackItem) {
+      selectedItem = fallbackItem;
+    } else {
       // 兜底：随机5星
       const allFiveStar = isCharacterBanner
         ? characters.filter(c => c.rarity === 5)
         : weapons.filter(w => w.rarity === 5);
-      selectedItem = getRandomItem(allFiveStar);
+      selectedItem = getRandomItem(allFiveStar as (Character | Weapon)[]);
     }
   }
 

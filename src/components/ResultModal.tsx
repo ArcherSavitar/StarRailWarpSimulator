@@ -1,5 +1,4 @@
 import { useWarpStore } from '../store/warpStore';
-import { PullRecord } from '../types';
 
 /**
  * 抽卡结果弹窗组件

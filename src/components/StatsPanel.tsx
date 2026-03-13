@@ -24,9 +24,6 @@ export function StatsPanel() {
   const bannerFiveStarRate = pullsInCurrentBanner > 0
     ? ((fiveStarsInBanner / pullsInCurrentBanner) * 100).toFixed(2)
     : '0.00';
-  const bannerFourStarRate = pullsInCurrentBanner > 0
-    ? ((fourStarsInBanner / pullsInCurrentBanner) * 100).toFixed(2)
-    : '0.00';
 
   return (
     <div className="bg-[#161B22] rounded-lg p-4 mb-6">
